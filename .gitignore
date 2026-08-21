@@ -1,0 +1,21 @@
+# Environnements virtuels Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node / frontend
+node_modules/
+dist/
+
+# Secrets
+.env
+
+# Divers
+db.sqlite3
+media/
+*.log
+
+# Config locale Claude Code
+.claude/
