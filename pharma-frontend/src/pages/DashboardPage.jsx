@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { TrendingUp, Package, AlertTriangle, ShoppingCart, Activity, XCircle } from 'lucide-react'
+import { TrendingUp, Package, AlertTriangle, ShoppingCart, Activity, XCircle, FileBarChart } from 'lucide-react'
 import { dashboardService } from '../services/api'
 import { useLang } from '../context/LangContext'
 import { useTheme } from '../context/ThemeContext'
+import { usePermissions } from '../hooks/usePermissions'
 import { formatFCFA } from '../utils/formatters'
 
 function StatCard({ icon: Icon, label, value, color, to }) {
@@ -24,6 +25,7 @@ function StatCard({ icon: Icon, label, value, color, to }) {
 export default function DashboardPage() {
   const { t, lang } = useLang()
   const { dark } = useTheme()
+  const { canViewAlerts } = usePermissions()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -57,9 +59,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('dashboard.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('dashboard.subtitle')}</p>
+        </div>
+        {canViewAlerts && (
+          <Link to="/rapport-mensuel" className="btn-secondary flex items-center gap-1.5 shrink-0">
+            <FileBarChart size={15} />
+            {t('rapport.title')}
+          </Link>
+        )}
       </div>
 
       {/* Stats grid — 2 colonnes mobile, 3 colonnes desktop */}

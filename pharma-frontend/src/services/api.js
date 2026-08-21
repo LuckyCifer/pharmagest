@@ -89,6 +89,7 @@ export const venteService = {
 
 export const dashboardService = {
   stats: () => api.get('/dashboard/stats/'),
+  rapportMensuel: (params) => api.get('/dashboard/rapport-mensuel/', { params }),
 }
 
 export const paieService = {

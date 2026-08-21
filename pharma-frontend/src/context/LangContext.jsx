@@ -199,6 +199,15 @@ const translations = {
       type: 'Type', qty: 'Quantité', prescriptionNumber: 'N° ordonnance', prescriber: 'Prescripteur', user: 'Utilisateur',
       noResults: 'Aucun mouvement sur cette période.', noMedicamentsControles: 'Aucun médicament sous contrôle enregistré.',
     },
+    rapport: {
+      title: 'Rapport mensuel', subtitle: 'Consommation mensuelle des médicaments',
+      month: 'Mois', generatedOn: 'Généré le', exportCsv: 'Exporter CSV', exportPdf: 'Exporter PDF',
+      tabAll: 'Tous les médicaments', tabControlled: 'Produits sous contrôle',
+      name: 'Nom', dci: 'DCI', form: 'Forme', dosage: 'Dosage',
+      stockStart: 'Stock début', entries: 'Entrées', exits: 'Sorties', stockEnd: 'Stock fin',
+      controlledDpml: 'Sous contrôle DPML', yes: 'Oui', no: 'Non',
+      noResults: 'Aucun médicament pour cette période.',
+    },
   },
   en: {
     nav: {
@@ -397,6 +406,15 @@ const translations = {
       totalSorties: 'Total dispensed', date: 'Date', medication: 'Medication', motif: 'Control reason',
       type: 'Type', qty: 'Quantity', prescriptionNumber: 'Prescription number', prescriber: 'Prescriber', user: 'User',
       noResults: 'No movements for this period.', noMedicamentsControles: 'No controlled medications registered.',
+    },
+    rapport: {
+      title: 'Monthly report', subtitle: 'Monthly medication consumption',
+      month: 'Month', generatedOn: 'Generated on', exportCsv: 'Export CSV', exportPdf: 'Export PDF',
+      tabAll: 'All medications', tabControlled: 'Controlled products',
+      name: 'Name', dci: 'INN', form: 'Form', dosage: 'Dosage',
+      stockStart: 'Start stock', entries: 'Entries', exits: 'Exits', stockEnd: 'End stock',
+      controlledDpml: 'DPML controlled', yes: 'Yes', no: 'No',
+      noResults: 'No medications for this period.',
     },
   },
 }
