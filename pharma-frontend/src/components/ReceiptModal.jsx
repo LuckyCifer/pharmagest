@@ -14,6 +14,9 @@ export default function ReceiptModal({ vente, onClose }) {
   const paymentLabels = { especes: t('sales.cash'), mobile_money: t('sales.mobile'), carte: t('sales.card'), credit: t('sales.credit') }
   const niu = import.meta.env.VITE_PHARMACIE_NIU
   const rccm = import.meta.env.VITE_PHARMACIE_RCCM
+  const pharmacieNom = import.meta.env.VITE_PHARMACIE_NOM || 'PharmaGest'
+  const pharmacieAdresse = import.meta.env.VITE_PHARMACIE_ADRESSE || 'ACERFI Formation · Douala, Cameroun'
+  const pharmacieTel = import.meta.env.VITE_PHARMACIE_TEL || '+237 6XX XXX XXX'
   const tauxTva = vente.lignes?.find(l => Number(l.taux_tva) > 0)?.taux_tva
 
   return (
@@ -44,9 +47,9 @@ export default function ReceiptModal({ vente, onClose }) {
       >
         {/* Header */}
         <div className="text-center px-6 pt-6 pb-4 border-b border-dashed border-gray-300">
-          <div className="text-lg font-bold tracking-wide uppercase">PharmaGest</div>
-          <div className="text-xs text-gray-500 mt-0.5">ACERFI Formation · Douala, Cameroun</div>
-          <div className="text-xs text-gray-400 mt-0.5">Tél: +237 6XX XXX XXX</div>
+          <div className="text-lg font-bold tracking-wide uppercase">{pharmacieNom}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{pharmacieAdresse}</div>
+          <div className="text-xs text-gray-400 mt-0.5">Tél: {pharmacieTel}</div>
           {niu && <div className="text-xs text-gray-400 mt-0.5">{t('receipt.niu')}: {niu}</div>}
           {rccm && <div className="text-xs text-gray-400 mt-0.5">{t('receipt.rccm')}: {rccm}</div>}
           <div className="mt-3 text-xs font-semibold uppercase tracking-widest text-gray-600">{t('receipt.subtitle')}</div>
@@ -95,7 +98,7 @@ export default function ReceiptModal({ vente, onClose }) {
         <div className="text-center px-6 py-4 text-xs text-gray-500 space-y-0.5">
           <p className="font-medium text-gray-700">{t('receipt.thanks')}</p>
           <p>{t('receipt.keepReceipt')}</p>
-          <p className="text-gray-400 mt-2">— PharmaGest —</p>
+          <p className="text-gray-400 mt-2">— {pharmacieNom} —</p>
         </div>
       </div>
     </div>

@@ -13,6 +13,8 @@ export default function PayslipModal({ fiche, onClose }) {
   const statusLabels = { en_attente: t('paie.pending'), payee: t('paie.paid') }
   const months = t('paie.months')
   const periode = `${months[fiche.mois - 1]} ${fiche.annee}`
+  const pharmacieNom = import.meta.env.VITE_PHARMACIE_NOM || 'PharmaGest'
+  const pharmacieAdresse = import.meta.env.VITE_PHARMACIE_ADRESSE || 'ACERFI Formation · Douala, Cameroun'
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 print:bg-transparent">
@@ -32,8 +34,8 @@ export default function PayslipModal({ fiche, onClose }) {
         className="bg-white text-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm max-h-[92vh] overflow-y-auto print:max-h-none print:overflow-visible print:rounded-none print:shadow-none print:max-w-none"
       >
         <div className="text-center px-6 pt-6 pb-4 border-b border-dashed border-gray-300">
-          <div className="text-lg font-bold tracking-wide uppercase">PharmaGest</div>
-          <div className="text-xs text-gray-500 mt-0.5">ACERFI Formation · Douala, Cameroun</div>
+          <div className="text-lg font-bold tracking-wide uppercase">{pharmacieNom}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{pharmacieAdresse}</div>
           <div className="mt-3 text-xs font-semibold uppercase tracking-widest text-gray-600">{t('payslip.subtitle')}</div>
         </div>
 
@@ -59,7 +61,7 @@ export default function PayslipModal({ fiche, onClose }) {
 
         <div className="text-center px-6 py-4 text-xs text-gray-500 space-y-0.5">
           <p>{t('payslip.footerNote')}</p>
-          <p className="text-gray-400 mt-2">— PharmaGest —</p>
+          <p className="text-gray-400 mt-2">— {pharmacieNom} —</p>
         </div>
       </div>
     </div>
