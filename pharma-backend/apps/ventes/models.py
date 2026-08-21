@@ -37,6 +37,13 @@ class Vente(models.Model):
     vendeur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, related_name='ventes')
     date_vente = models.DateTimeField(auto_now_add=True)
 
+    # Ordonnance médicale (optionnelle — non bloquante pour la dispensation)
+    numero_ordonnance = models.CharField(max_length=50, blank=True, default='')
+    prescripteur_nom = models.CharField(max_length=150, blank=True, default='')
+    prescripteur_ordre = models.CharField(max_length=50, blank=True, help_text="N° d'ordre ONMC du médecin")
+    ordonnance_date = models.DateField(null=True, blank=True)
+    ordonnance_scan = models.FileField(upload_to='ordonnances/%Y/%m/', null=True, blank=True)
+
     class Meta:
         verbose_name = 'Vente'
         verbose_name_plural = 'Ventes'

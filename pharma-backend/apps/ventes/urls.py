@@ -6,4 +6,5 @@ urlpatterns = [
     path('<int:pk>/', views.VenteDetailView.as_view(), name='vente-detail'),
     path('export/csv/', views.export_ventes_csv, name='ventes-export-csv'),
     path('<int:pk>/statut-paiement/', views.statut_paiement, name='vente-statut-paiement'),
+    path('<int:pk>/ordonnance-scan/', views.upload_ordonnance_scan, name='vente-ordonnance-scan'),
 ]

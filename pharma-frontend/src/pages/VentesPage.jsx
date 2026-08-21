@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Trash2, Download, ChevronDown, ChevronUp, Printer } from 'lucide-react'
+import { Plus, X, Trash2, Download, ChevronDown, ChevronUp, Printer, FileText, Paperclip } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { venteService, medicamentService } from '../services/api'
 import { useLang } from '../context/LangContext'
@@ -27,8 +27,11 @@ export default function VentesPage() {
   const [downloading, setDownloading] = useState(false)
   const [form, setForm] = useState({
     client_nom: '', client_telephone: '', mode_paiement: 'especes', operateur: 'mtn',
-    montant_paye: '', observations: '', lignes: []
+    montant_paye: '', observations: '', lignes: [],
+    numero_ordonnance: '', prescripteur_nom: '', prescripteur_ordre: '', ordonnance_date: ''
   })
+  const [ordonnanceOpen, setOrdonnanceOpen] = useState(false)
+  const [ordonnanceFile, setOrdonnanceFile] = useState(null)
   const [pendingVente, setPendingVente] = useState(null)
   const [pendingResult, setPendingResult] = useState(null)
   const [page, setPage] = useState(1)
@@ -49,7 +52,12 @@ export default function VentesPage() {
   useEffect(() => { load() }, [page])
 
   const openModal = () => {
-    setForm({ client_nom: '', client_telephone: '', mode_paiement: 'especes', operateur: 'mtn', montant_paye: '', observations: '', lignes: [] })
+    setForm({
+      client_nom: '', client_telephone: '', mode_paiement: 'especes', operateur: 'mtn', montant_paye: '', observations: '', lignes: [],
+      numero_ordonnance: '', prescripteur_nom: '', prescripteur_ordre: '', ordonnance_date: ''
+    })
+    setOrdonnanceOpen(false)
+    setOrdonnanceFile(null)
     setModal(true)
   }
 
@@ -68,11 +76,17 @@ export default function VentesPage() {
     if (form.mode_paiement === 'mobile_money' && !form.client_telephone) return toast.error(t('sales.phoneRequiredMomo'))
     setSaving(true)
     try {
-      const res = await venteService.creer({
+      const payload = {
         ...form,
         montant_paye: parseInt(form.montant_paye) || calcTotal(),
         lignes: form.lignes.map(l => ({ medicament: parseInt(l.medicament), quantite: parseInt(l.quantite) }))
-      })
+      }
+      if (!payload.ordonnance_date) delete payload.ordonnance_date
+      const res = await venteService.creer(payload)
+      if (ordonnanceFile) {
+        try { await venteService.uploadOrdonnanceScan(res.data.id, ordonnanceFile) }
+        catch { toast.error(t('sales.toastScanUploadFailed')) }
+      }
       setModal(false)
       if (res.data.mode_paiement === 'mobile_money' && res.data.statut === 'en_attente') {
         setPendingVente(res.data)
@@ -191,6 +205,11 @@ export default function VentesPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono font-medium text-sm text-gray-900 dark:text-white">{v.reference}</span>
                         <span className={STATUT_BADGE[v.statut] || 'badge-gray'}>{statutLabel(v.statut)}</span>
+                        {v.numero_ordonnance && (
+                          <span className="badge-gray flex items-center gap-1" title={t('sales.prescriptionBadge')}>
+                            <FileText size={11} /> {t('sales.prescription')}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         {formatDateTime(v.date_vente, lang)}{v.client_nom ? ` · ${v.client_nom}` : ''}
@@ -250,7 +269,12 @@ export default function VentesPage() {
                         <td className="td text-gray-400">
                           {expanded === v.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </td>
-                        <td className="td font-mono font-medium">{v.reference}</td>
+                        <td className="td font-mono font-medium">
+                          <div className="flex items-center gap-1.5">
+                            {v.reference}
+                            {v.numero_ordonnance && <FileText size={13} className="text-gray-400" title={t('sales.prescriptionBadge')} />}
+                          </div>
+                        </td>
                         <td className="td text-xs">{formatDateTime(v.date_vente, lang)}</td>
                         <td className="td">{v.client_nom || '—'}</td>
                         <td className="td text-right font-medium">{formatFCFA(v.montant_total, lang)}</td>
@@ -407,6 +431,44 @@ export default function VentesPage() {
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.phone')}</label>
                   <input className="input" value={form.client_telephone} onChange={e => setForm(p => ({ ...p, client_telephone: e.target.value }))} />
                 </div>
+              </div>
+
+              {/* Ordonnance médicale (optionnel) */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOrdonnanceOpen(o => !o)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                >
+                  <span className="flex items-center gap-2"><Paperclip size={14} /> {t('sales.prescriptionOptional')}</span>
+                  {ordonnanceOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                {ordonnanceOpen && (
+                  <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.prescriptionNumber')}</label>
+                        <input className="input" value={form.numero_ordonnance} onChange={e => setForm(p => ({ ...p, numero_ordonnance: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.prescriptionDate')}</label>
+                        <input type="date" className="input" value={form.ordonnance_date} onChange={e => setForm(p => ({ ...p, ordonnance_date: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.prescriberName')}</label>
+                        <input className="input" value={form.prescripteur_nom} onChange={e => setForm(p => ({ ...p, prescripteur_nom: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.prescriberOrder')}</label>
+                        <input className="input" value={form.prescripteur_ordre} onChange={e => setForm(p => ({ ...p, prescripteur_ordre: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.prescriptionScan')}</label>
+                      <input type="file" accept="application/pdf,image/*" className="input text-sm" onChange={e => setOrdonnanceFile(e.target.files?.[0] || null)} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Lignes */}

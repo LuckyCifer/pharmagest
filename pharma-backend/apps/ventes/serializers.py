@@ -32,9 +32,10 @@ class VenteSerializer(serializers.ModelSerializer):
             'id', 'reference', 'client_nom', 'client_telephone',
             'lignes', 'montant_total', 'montant_ht', 'montant_tva', 'montant_paye', 'monnaie_rendue',
             'mode_paiement', 'mode_paiement_display', 'operateur', 'reference_paiement', 'statut',
-            'observations', 'vendeur', 'vendeur_nom', 'date_vente'
+            'observations', 'vendeur', 'vendeur_nom', 'date_vente',
+            'numero_ordonnance', 'prescripteur_nom', 'prescripteur_ordre', 'ordonnance_date', 'ordonnance_scan',
         ]
-        read_only_fields = ['reference', 'date_vente', 'montant_total', 'montant_ht', 'montant_tva', 'reference_paiement']
+        read_only_fields = ['reference', 'date_vente', 'montant_total', 'montant_ht', 'montant_tva', 'reference_paiement', 'ordonnance_scan']
 
     def validate(self, data):
         if data.get('mode_paiement') == 'mobile_money':
@@ -104,6 +105,7 @@ class VenteSerializer(serializers.ModelSerializer):
                     type_mouvement='sortie',
                     quantite=quantite,
                     motif=f"Vente {vente.reference}",
+                    reference=vente.reference,
                     utilisateur=validated_data.get('vendeur')
                 )
 

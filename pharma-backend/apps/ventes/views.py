@@ -1,6 +1,7 @@
 from rest_framework import generics, status, serializers
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db import transaction as db_transaction
@@ -24,6 +25,11 @@ class VenteListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(date_vente__date__gte=date_debut)
         if date_fin:
             qs = qs.filter(date_vente__date__lte=date_fin)
+        avec_ordonnance = self.request.query_params.get('avec_ordonnance')
+        if avec_ordonnance == 'true':
+            qs = qs.exclude(numero_ordonnance='')
+        elif avec_ordonnance == 'false':
+            qs = qs.filter(numero_ordonnance='')
         return qs
 
     def perform_create(self, serializer):
@@ -118,6 +124,7 @@ def statut_paiement(request, pk):
                     type_mouvement='sortie',
                     quantite=ligne.quantite,
                     motif=f"Vente {vente.reference}",
+                    reference=vente.reference,
                     utilisateur=vente.vendeur,
                 )
             vente.statut = 'validee'
@@ -127,4 +134,22 @@ def statut_paiement(request, pk):
         vente.statut = 'annulee'
         vente.save()
 
+    return Response(VenteSerializer(vente).data)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser])
+def upload_ordonnance_scan(request, pk):
+    try:
+        vente = Vente.objects.get(pk=pk)
+    except Vente.DoesNotExist:
+        return Response({'error': 'Vente non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+
+    scan = request.FILES.get('scan')
+    if not scan:
+        return Response({'error': "Aucun fichier reçu (champ 'scan' attendu)."}, status=status.HTTP_400_BAD_REQUEST)
+
+    vente.ordonnance_scan = scan
+    vente.save()
     return Response(VenteSerializer(vente).data)

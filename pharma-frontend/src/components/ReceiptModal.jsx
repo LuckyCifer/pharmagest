@@ -80,6 +80,15 @@ export default function ReceiptModal({ vente, onClose }) {
           ))}
         </div>
 
+        {/* Ordonnance médicale */}
+        {vente.numero_ordonnance && (
+          <div className="px-6 py-3 border-b border-dashed border-gray-300 space-y-1">
+            <div className="text-xs font-semibold text-gray-500 uppercase mb-1">{t('receipt.prescriptionTitle')}</div>
+            <Row label={t('receipt.prescriptionNumber')} value={vente.numero_ordonnance} mono />
+            {vente.prescripteur_nom && <Row label={t('receipt.prescriber')} value={vente.prescripteur_nom} />}
+          </div>
+        )}
+
         {/* Totals */}
         <div className="px-6 py-3 border-b border-dashed border-gray-300 space-y-1.5">
           <Row label={t('receipt.montantHT')} value={formatFCFA(vente.montant_ht, lang)} />

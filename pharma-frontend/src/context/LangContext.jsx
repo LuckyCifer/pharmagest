@@ -79,6 +79,11 @@ const translations = {
       paymentFailed: 'Paiement refusé ou expiré',
       paymentTimeout: 'Toujours en attente — vérifiez à nouveau plus tard depuis la liste des ventes.',
       checkingStatus: 'Vérification...',
+      prescription: 'Ordonnance médicale', prescriptionOptional: 'Ordonnance médicale (optionnel)',
+      prescriptionNumber: 'N° ordonnance', prescriberName: 'Nom du prescripteur',
+      prescriberOrder: "N° d'ordre ONMC", prescriptionDate: "Date de l'ordonnance",
+      prescriptionScan: 'Scan ordonnance (PDF ou image)', prescriptionBadge: 'Ordonnance',
+      toastScanUploadFailed: "La vente a été enregistrée mais l'envoi du scan a échoué",
     },
     alerts: {
       title: 'Alertes', subtitle: 'Alertes de stock et de péremption',
@@ -131,6 +136,7 @@ const translations = {
       keepReceipt: 'Conservez ce reçu comme preuve d\'achat.',
       niu: 'NIU', rccm: 'RCCM', montantHT: 'Montant HT',
       tva: (p) => `TVA (${p.taux}%)`,
+      prescriptionTitle: 'Ordonnance', prescriptionNumber: 'N° ordonnance', prescriber: 'Prescripteur',
     },
     paie: {
       title: 'Paie', subtitle: 'Gestion de la paie des employés',
@@ -262,6 +268,11 @@ const translations = {
       paymentFailed: 'Payment declined or expired',
       paymentTimeout: 'Still pending — check back later from the sales list.',
       checkingStatus: 'Checking...',
+      prescription: 'Medical prescription', prescriptionOptional: 'Medical prescription (optional)',
+      prescriptionNumber: 'Prescription number', prescriberName: 'Prescriber name',
+      prescriberOrder: 'ONMC order number', prescriptionDate: 'Prescription date',
+      prescriptionScan: 'Prescription scan (PDF or image)', prescriptionBadge: 'Prescription',
+      toastScanUploadFailed: 'The sale was saved but the scan upload failed',
     },
     alerts: {
       title: 'Alerts', subtitle: 'Stock and expiry alerts',
@@ -314,6 +325,7 @@ const translations = {
       keepReceipt: 'Keep this receipt as proof of purchase.',
       niu: 'Tax ID (NIU)', rccm: 'Trade Register (RCCM)', montantHT: 'Amount excl. tax',
       tva: (p) => `VAT (${p.taux}%)`,
+      prescriptionTitle: 'Prescription', prescriptionNumber: 'Prescription number', prescriber: 'Prescriber',
     },
     paie: {
       title: 'Payroll', subtitle: 'Employee payroll management',

@@ -78,6 +78,11 @@ export const venteService = {
   exportCsv: ()       => api.get('/ventes/export/csv/', { responseType: 'blob' }),
   exportPreview: ()   => api.get('/ventes/export/csv/', { params: { preview: 1 } }),
   statutPaiement: (id) => api.get(`/ventes/${id}/statut-paiement/`),
+  uploadOrdonnanceScan: (id, file) => {
+    const form = new FormData()
+    form.append('scan', file)
+    return api.patch(`/ventes/${id}/ordonnance-scan/`, form, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
 }
 
 export const dashboardService = {
