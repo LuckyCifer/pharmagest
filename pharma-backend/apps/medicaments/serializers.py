@@ -34,7 +34,8 @@ class MedicamentSerializer(serializers.ModelSerializer):
             'categorie', 'categorie_nom', 'fournisseur', 'fournisseur_nom',
             'numero_lot', 'date_fabrication', 'date_peremption',
             'prix_achat', 'prix_vente', 'quantite_stock', 'seuil_alerte',
-            'description', 'est_actif', 'statut_stock', 'statut_peremption',
+            'description', 'est_actif', 'sous_controle_dpml', 'motif_controle',
+            'statut_stock', 'statut_peremption',
             'jours_avant_peremption', 'marge_beneficiaire',
             'date_creation', 'date_modification'
         ]

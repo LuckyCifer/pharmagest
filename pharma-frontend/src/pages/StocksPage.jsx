@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, X, ArrowUpCircle, ArrowDownCircle, ShieldAlert } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { stockService, medicamentService } from '../services/api'
 import { useLang } from '../context/LangContext'
@@ -14,7 +15,7 @@ const TYPE_COLORS = {
 
 export default function StocksPage() {
   const { t, lang } = useLang()
-  const { canAddMovement } = usePermissions()
+  const { canAddMovement, canViewAlerts } = usePermissions()
   const [mouvements, setMouvements] = useState([])
   const [meds, setMeds] = useState([])
   const [loading, setLoading] = useState(true)
@@ -71,11 +72,19 @@ export default function StocksPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t('stocks.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('stocks.subtitle')}</p>
         </div>
-        {canAddMovement && <button onClick={() => setModal(true)} className="btn-primary flex items-center gap-1.5 shrink-0">
-          <Plus size={16} />
-          <span className="hidden sm:inline">{t('stocks.addMovement')}</span>
-          <span className="sm:hidden">{t('stocks.movementShort')}</span>
-        </button>}
+        <div className="flex gap-2 shrink-0">
+          {canViewAlerts && (
+            <Link to="/registre-dpml" className="btn-secondary flex items-center gap-1.5">
+              <ShieldAlert size={15} />
+              <span className="hidden sm:inline">{t('registre.title')}</span>
+            </Link>
+          )}
+          {canAddMovement && <button onClick={() => setModal(true)} className="btn-primary flex items-center gap-1.5">
+            <Plus size={16} />
+            <span className="hidden sm:inline">{t('stocks.addMovement')}</span>
+            <span className="sm:hidden">{t('stocks.movementShort')}</span>
+          </button>}
+        </div>
       </div>
 
       <div className="card overflow-hidden">

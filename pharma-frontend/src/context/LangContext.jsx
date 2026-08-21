@@ -37,6 +37,8 @@ const translations = {
       expiryExpired: 'Périmé', expiryUnknown: 'Non renseigné',
       formes: { comprime: 'Comprimé', sirop: 'Sirop', injectable: 'Injectable', capsule: 'Capsule', pommade: 'Pommade', autre: 'Autre' },
       typeProduit: 'Type de produit', typeMedicament: 'Médicament', typeParapharmacie: 'Parapharmacie',
+      sousControle: 'Produit sous contrôle DPML', motifControle: 'Motif du contrôle',
+      motifControlePlaceholder: 'Ex : Tramadol, Dermocorticoïde, Psychotrope', controlled: 'CONTRÔLÉ',
     },
     stocks: {
       title: 'Gestion des stocks', subtitle: 'Mouvements et historique des stocks',
@@ -189,6 +191,14 @@ const translations = {
       toastCancelled: 'Commande annulée', toastDeleted: 'Commande supprimée',
       toastNoLine: 'Ajoutez au moins un médicament', toastQtyRequired: 'Quantité reçue requise pour au moins une ligne',
     },
+    registre: {
+      title: 'Registre DPML', subtitle: 'Suivi mensuel des produits sous contrôle (Tramadol, dermocorticoïdes...)',
+      month: 'Mois', export: 'Exporter CSV',
+      medicamentsControles: 'Médicaments sous contrôle', movements: 'Mouvements du mois',
+      totalSorties: 'Total sorties', date: 'Date', medication: 'Médicament', motif: 'Motif contrôle',
+      type: 'Type', qty: 'Quantité', prescriptionNumber: 'N° ordonnance', prescriber: 'Prescripteur', user: 'Utilisateur',
+      noResults: 'Aucun mouvement sur cette période.', noMedicamentsControles: 'Aucun médicament sous contrôle enregistré.',
+    },
   },
   en: {
     nav: {
@@ -226,6 +236,8 @@ const translations = {
       expiryExpired: 'Expired', expiryUnknown: 'Not set',
       formes: { comprime: 'Tablet', sirop: 'Syrup', injectable: 'Injectable', capsule: 'Capsule', pommade: 'Ointment', autre: 'Other' },
       typeProduit: 'Product type', typeMedicament: 'Medication', typeParapharmacie: 'Parapharmacy',
+      sousControle: 'Controlled product (DPML)', motifControle: 'Control reason',
+      motifControlePlaceholder: 'E.g.: Tramadol, Dermocorticoid, Psychotropic', controlled: 'CONTROLLED',
     },
     stocks: {
       title: 'Stock management', subtitle: 'Stock movements and history',
@@ -377,6 +389,14 @@ const translations = {
       toastSaved: 'Order saved', toastReceived: 'Order received',
       toastCancelled: 'Order cancelled', toastDeleted: 'Order deleted',
       toastNoLine: 'Add at least one medication', toastQtyRequired: 'Received quantity required for at least one line',
+    },
+    registre: {
+      title: 'DPML Register', subtitle: 'Monthly tracking of controlled products (Tramadol, dermocorticoids...)',
+      month: 'Month', export: 'Export CSV',
+      medicamentsControles: 'Controlled medications', movements: 'Movements this month',
+      totalSorties: 'Total dispensed', date: 'Date', medication: 'Medication', motif: 'Control reason',
+      type: 'Type', qty: 'Quantity', prescriptionNumber: 'Prescription number', prescriber: 'Prescriber', user: 'User',
+      noResults: 'No movements for this period.', noMedicamentsControles: 'No controlled medications registered.',
     },
   },
 }

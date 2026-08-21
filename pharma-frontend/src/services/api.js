@@ -62,6 +62,8 @@ export const medicamentService = {
   creerCategorie:   (data)   => api.post('/medicaments/categories/', data),
   fournisseurs:     (params) => api.get('/medicaments/fournisseurs/', { params }),
   creerFournisseur: (data)   => api.post('/medicaments/fournisseurs/', data),
+  registreControle: (params) => api.get('/medicaments/registre-controle/', { params }),
+  registreControleCsv: (mois) => api.get('/medicaments/registre-controle/', { params: { mois, export: 'csv' }, responseType: 'blob' }),
 }
 
 export const stockService = {

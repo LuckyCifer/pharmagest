@@ -13,6 +13,7 @@ import AlertesPage from './pages/AlertesPage'
 import UtilisateursPage from './pages/UtilisateursPage'
 import PaiePage from './pages/PaiePage'
 import CommandesPage from './pages/CommandesPage'
+import RegistreDpmlPage from './pages/RegistreDpmlPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="ventes" element={<VentesPage />} />
         <Route path="paie" element={<PaiePage />} />
         <Route path="alertes" element={<PharmacistRoute><AlertesPage /></PharmacistRoute>} />
+        <Route path="registre-dpml" element={<PharmacistRoute><RegistreDpmlPage /></PharmacistRoute>} />
         <Route path="utilisateurs" element={<AdminRoute><UtilisateursPage /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

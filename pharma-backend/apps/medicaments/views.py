@@ -3,9 +3,25 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db import models
+from django.utils import timezone
 from apps.permissions import IsAdminUser, IsAdminOrPharmacien
 from .models import Medicament, Categorie, Fournisseur
 from .serializers import MedicamentSerializer, CategorieSerializer, FournisseurSerializer
+
+
+def _bornes_mois(annee, mois):
+    """Bornes datetime [début, fin) d'un mois donné, en heure locale.
+
+    Même principe tz-safe que _bornes_jour (apps/dashboard/views.py) : on évite
+    les lookups __month/__year, qui dépendent de CONVERT_TZ() côté MySQL —
+    indisponible si les tables de fuseaux horaires ne sont pas chargées sur le serveur.
+    """
+    debut = timezone.localtime(timezone.now()).replace(year=annee, month=mois, day=1, hour=0, minute=0, second=0, microsecond=0)
+    if mois == 12:
+        fin = debut.replace(year=annee + 1, month=1)
+    else:
+        fin = debut.replace(month=mois + 1)
+    return debut, fin
 
 
 class CategorieListCreateView(generics.ListCreateAPIView):
@@ -78,6 +94,12 @@ class MedicamentListCreateView(generics.ListCreateAPIView):
         if type_produit:
             qs = qs.filter(type_produit=type_produit)
 
+        sous_controle = self.request.query_params.get('sous_controle')
+        if sous_controle == 'true':
+            qs = qs.filter(sous_controle_dpml=True)
+        elif sous_controle == 'false':
+            qs = qs.filter(sous_controle_dpml=False)
+
         # Filtres appliqués avant pagination (statut_stock/statut_peremption sont des
         # propriétés Python calculées, donc traduites ici en équivalents ORM).
         statut_stock = self.request.query_params.get('statut_stock')
@@ -145,4 +167,77 @@ def medicaments_alertes(request):
         'peremption_proche': MedicamentSerializer(peremption, many=True).data,
         'perimes': MedicamentSerializer(perimes, many=True).data,
         'total_alertes': rupture.count() + critique.count() + peremption.count() + perimes.count()
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrPharmacien])
+def registre_controle(request):
+    import csv
+    from django.http import HttpResponse
+    from apps.stocks.models import MouvementStock
+    from apps.ventes.models import Vente
+
+    mois_param = request.query_params.get('mois')
+    now_local = timezone.localtime(timezone.now())
+    if mois_param:
+        try:
+            annee, mois = map(int, mois_param.split('-'))
+        except (ValueError, AttributeError):
+            return Response({'error': "Paramètre 'mois' invalide, format attendu AAAA-MM."}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        annee, mois = now_local.year, now_local.month
+
+    debut, fin = _bornes_mois(annee, mois)
+    periode = f"{annee:04d}-{mois:02d}"
+
+    medicaments_controle = Medicament.objects.filter(sous_controle_dpml=True, est_actif=True)
+
+    mouvements_qs = MouvementStock.objects.filter(
+        medicament__sous_controle_dpml=True,
+        type_mouvement='sortie',
+        date_mouvement__gte=debut, date_mouvement__lt=fin,
+    ).select_related('medicament', 'utilisateur').order_by('date_mouvement')
+
+    # Les infos de prescription sont retrouvées via le champ `reference` du mouvement,
+    # renseigné pour les ventes depuis le module Ordonnances (voir apps/ventes/serializers.py) —
+    # les mouvements antérieurs à ce correctif ou non liés à une vente restent sans prescripteur.
+    references = [m.reference for m in mouvements_qs if m.reference]
+    ventes_par_ref = {v.reference: v for v in Vente.objects.filter(reference__in=references)}
+
+    mouvements = []
+    total_sorties = 0
+    for m in mouvements_qs:
+        vente = ventes_par_ref.get(m.reference)
+        utilisateur_nom = (m.utilisateur.get_full_name() or m.utilisateur.username) if m.utilisateur else ''
+        mouvements.append({
+            'date': timezone.localtime(m.date_mouvement).strftime('%d/%m/%Y %H:%M'),
+            'medicament': m.medicament.nom,
+            'motif_controle': m.medicament.motif_controle,
+            'type': 'sortie',
+            'quantite': m.quantite,
+            'reference_ordonnance': vente.numero_ordonnance if vente else '',
+            'prescripteur': vente.prescripteur_nom if vente else '',
+            'utilisateur': utilisateur_nom,
+        })
+        total_sorties += m.quantite
+
+    if request.query_params.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="registre_dpml_{periode}.csv"'
+        response.write('﻿')
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow(['Date', 'Médicament', 'Motif contrôle', 'Type mouvement', 'Quantité', 'N° ordonnance', 'Prescripteur', 'Utilisateur'])
+        for mvt in mouvements:
+            writer.writerow([
+                mvt['date'], mvt['medicament'], mvt['motif_controle'], mvt['type'],
+                mvt['quantite'], mvt['reference_ordonnance'], mvt['prescripteur'], mvt['utilisateur'],
+            ])
+        return response
+
+    return Response({
+        'periode': periode,
+        'medicaments_sous_controle': MedicamentSerializer(medicaments_controle, many=True).data,
+        'mouvements': mouvements,
+        'total_sorties': total_sorties,
     })

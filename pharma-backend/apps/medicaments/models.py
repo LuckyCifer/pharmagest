@@ -65,6 +65,8 @@ class Medicament(models.Model):
     seuil_alerte = models.IntegerField(default=10, help_text="Quantité minimale avant alerte")
     description = models.TextField(blank=True)
     est_actif = models.BooleanField(default=True)
+    sous_controle_dpml = models.BooleanField(default=False, help_text="Tramadol, dermocorticoïdes — circulaires DPML déc. 2019")
+    motif_controle = models.CharField(max_length=100, blank=True, help_text="Ex : Tramadol, Dermocorticoïde, Psychotrope")
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
 

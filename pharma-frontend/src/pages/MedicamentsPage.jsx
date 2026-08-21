@@ -14,7 +14,8 @@ const FORMES = ['comprime','sirop','injectable','capsule','pommade','autre']
 const emptyForm = {
   nom:'', denomination_commune:'', forme:'comprime', type_produit:'medicament', dosage:'', categorie:'', fournisseur:'',
   numero_lot:'', date_fabrication:'', date_peremption:'',
-  prix_achat:'', prix_vente:'', quantite_stock:0, seuil_alerte:10, description:''
+  prix_achat:'', prix_vente:'', quantite_stock:0, seuil_alerte:10, description:'',
+  sous_controle_dpml:false, motif_controle:''
 }
 
 export default function MedicamentsPage() {
@@ -68,6 +69,7 @@ export default function MedicamentsPage() {
       date_peremption: m.date_peremption || '', prix_achat: m.prix_achat,
       prix_vente: m.prix_vente, quantite_stock: m.quantite_stock,
       seuil_alerte: m.seuil_alerte, description: m.description || '',
+      sous_controle_dpml: m.sous_controle_dpml || false, motif_controle: m.motif_controle || '',
       _id: m.id,
     })
     setModal('edit')
@@ -152,6 +154,7 @@ export default function MedicamentsPage() {
                         <span className="font-medium text-sm text-gray-900 dark:text-white">{m.nom}</span>
                         <span className={sb.class}>{sb.label}</span>
                         {m.type_produit === 'parapharmacie' && <span className="badge-info">{t('medications.typeParapharmacie')}</span>}
+                        {m.sous_controle_dpml && <span className="badge-danger">{t('medications.controlled')}</span>}
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         {FORMES_LABELS[m.forme]}{m.dosage ? ` · ${m.dosage}` : ''}
@@ -206,6 +209,7 @@ export default function MedicamentsPage() {
                           <div className="font-medium flex items-center gap-2">
                             {m.nom}
                             {m.type_produit === 'parapharmacie' && <span className="badge-info">{t('medications.typeParapharmacie')}</span>}
+                            {m.sous_controle_dpml && <span className="badge-danger">{t('medications.controlled')}</span>}
                           </div>
                           {m.dosage && <div className="text-xs text-gray-400">{m.dosage}</div>}
                         </td>
@@ -321,6 +325,23 @@ export default function MedicamentsPage() {
               <div className="col-span-1 sm:col-span-2">
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('medications.description')}</label>
                 <textarea className="input resize-none" rows={2} value={form.description} onChange={e => f('description', e.target.value)} />
+              </div>
+              <div className="col-span-1 sm:col-span-2 space-y-3">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    checked={form.sous_controle_dpml}
+                    onChange={e => f('sous_controle_dpml', e.target.checked)}
+                  />
+                  {t('medications.sousControle')}
+                </label>
+                {form.sous_controle_dpml && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('medications.motifControle')}</label>
+                    <input className="input" placeholder={t('medications.motifControlePlaceholder')} value={form.motif_controle} onChange={e => f('motif_controle', e.target.value)} />
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-gray-800">
