@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { LangProvider } from './context/LangContext'
+import { OfflineProvider } from './context/OfflineContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -65,17 +66,19 @@ export default function App() {
     <ThemeProvider>
       <LangProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 3000,
-                style: { borderRadius: '10px', fontSize: '14px' },
-                success: { iconTheme: { primary: '#16a34a', secondary: '#fff' } },
-              }}
-            />
-          </BrowserRouter>
+          <OfflineProvider>
+            <BrowserRouter>
+              <AppRoutes />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3000,
+                  style: { borderRadius: '10px', fontSize: '14px' },
+                  success: { iconTheme: { primary: '#16a34a', secondary: '#fff' } },
+                }}
+              />
+            </BrowserRouter>
+          </OfflineProvider>
         </AuthProvider>
       </LangProvider>
     </ThemeProvider>

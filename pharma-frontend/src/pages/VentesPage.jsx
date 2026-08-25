@@ -1,20 +1,56 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Trash2, Download, ChevronDown, ChevronUp, Printer, FileText, Paperclip } from 'lucide-react'
+import { Plus, X, Trash2, Download, ChevronDown, ChevronUp, Printer, FileText, Paperclip, WifiOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { venteService, medicamentService } from '../services/api'
 import { useLang } from '../context/LangContext'
 import { usePermissions } from '../hooks/usePermissions'
+import { useAuth } from '../context/AuthContext'
+import { useOffline, isNetworkError } from '../context/OfflineContext'
+import { cacheMedicaments, getCachedMedicaments } from '../offline/db'
 import { formatFCFA, formatDateTime } from '../utils/formatters'
 import ReceiptModal from '../components/ReceiptModal'
 import Pagination from '../components/Pagination'
 
-const STATUT_BADGE = { validee: 'badge-success', en_attente: 'badge-warning', annulee: 'badge-danger' }
+const STATUT_BADGE = { validee: 'badge-success', en_attente: 'badge-warning', annulee: 'badge-danger', hors_ligne: 'badge-warning', erreur_sync: 'badge-danger' }
 
-const STATUT_LABEL_KEY = { validee: 'sales.validated', en_attente: 'sales.pending', annulee: 'sales.cancelled' }
+const STATUT_LABEL_KEY = {
+  validee: 'sales.validated', en_attente: 'sales.pending', annulee: 'sales.cancelled',
+  hors_ligne: 'sales.statutOffline', erreur_sync: 'sales.statutSyncError',
+}
+
+function pendingToVenteLike(rec, meds, vendeurNom) {
+  const lignes = (rec.payload.lignes || []).map(l => {
+    const med = meds.find(m => m.id === l.medicament)
+    const prix = med?.prix_vente || 0
+    return {
+      medicament: l.medicament, medicament_nom: med?.nom || '—',
+      quantite: l.quantite, prix_unitaire: prix, sous_total: prix * l.quantite,
+    }
+  })
+  const montant_total = lignes.reduce((a, l) => a + l.sous_total, 0)
+  const montant_paye = parseInt(rec.payload.montant_paye) || montant_total
+  return {
+    id: rec.localId, __offline: true, __record: rec,
+    reference: rec.localId,
+    client_nom: rec.payload.client_nom, client_telephone: rec.payload.client_telephone,
+    date_vente: rec.createdAt,
+    montant_total, montant_ht: montant_total, montant_tva: 0,
+    montant_paye, monnaie_rendue: Math.max(0, montant_paye - montant_total),
+    mode_paiement: rec.payload.mode_paiement,
+    vendeur_nom: vendeurNom,
+    statut: rec.status === 'error' ? 'erreur_sync' : 'hors_ligne',
+    lignes,
+    numero_ordonnance: rec.payload.numero_ordonnance,
+    prescripteur_nom: rec.payload.prescripteur_nom,
+    errorMessage: rec.errorMessage,
+  }
+}
 
 export default function VentesPage() {
   const { t, lang } = useLang()
   const { canExportSales } = usePermissions()
+  const { user } = useAuth()
+  const { isOnline, pendingSales, queueSale, discardQueuedSale, offlineReserved } = useOffline()
   const [ventes, setVentes] = useState([])
   const [meds, setMeds] = useState([])
   const [loading, setLoading] = useState(true)
@@ -39,17 +75,34 @@ export default function VentesPage() {
 
   const load = () => {
     setLoading(true)
-    Promise.all([venteService.lister({ page }), medicamentService.lister({ page_size: 500 })])
-      .then(([r1, r2]) => {
-        setVentes(r1.data.results ?? r1.data)
-        setCount(r1.data.count ?? (r1.data.results ?? r1.data).length)
-        setMeds(r2.data.results ?? r2.data)
+    Promise.allSettled([venteService.lister({ page }), medicamentService.lister({ page_size: 500 })])
+      .then(async ([r1, r2]) => {
+        if (r1.status === 'fulfilled') {
+          setVentes(r1.value.data.results ?? r1.value.data)
+          setCount(r1.value.data.count ?? (r1.value.data.results ?? r1.value.data).length)
+        } else if (navigator.onLine) {
+          toast.error(t('common.error'))
+        }
+        if (r2.status === 'fulfilled') {
+          const list = r2.value.data.results ?? r2.value.data
+          setMeds(list)
+          cacheMedicaments(list)
+        } else {
+          const cached = await getCachedMedicaments()
+          if (cached.length) setMeds(cached)
+        }
       })
-      .catch(() => toast.error(t('common.error')))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [page])
+
+  useEffect(() => {
+    if (!isOnline && form.mode_paiement === 'mobile_money') {
+      setForm(p => ({ ...p, mode_paiement: 'especes' }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline])
 
   const openModal = () => {
     setForm({
@@ -70,9 +123,25 @@ export default function VentesPage() {
     return acc + (med ? med.prix_vente * (parseInt(l.quantite) || 0) : 0)
   }, 0)
 
+  const vendeurNom = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : (user?.username || '—')
+
+  const checkOfflineStock = () => {
+    for (const l of form.lignes) {
+      const med = meds.find(m => String(m.id) === String(l.medicament))
+      const reserved = offlineReserved[parseInt(l.medicament)] || 0
+      const available = (med?.quantite_stock || 0) - reserved
+      if (available < parseInt(l.quantite)) {
+        toast.error(t('sales.insufficientStock', { nom: med?.nom || l.medicament, disponible: Math.max(0, available) }))
+        return false
+      }
+    }
+    return true
+  }
+
   const handleSave = async () => {
     if (form.lignes.length === 0) return toast.error(t('sales.toastNoLine'))
     if (form.lignes.some(l => !l.medicament || !l.quantite)) return toast.error(t('sales.toastIncompleteLines'))
+    if (form.mode_paiement === 'mobile_money' && !isOnline) return toast.error(t('sales.momoRequiresOnline'))
     if (form.mode_paiement === 'mobile_money' && !form.client_telephone) return toast.error(t('sales.phoneRequiredMomo'))
     setSaving(true)
     try {
@@ -82,7 +151,33 @@ export default function VentesPage() {
         lignes: form.lignes.map(l => ({ medicament: parseInt(l.medicament), quantite: parseInt(l.quantite) }))
       }
       if (!payload.ordonnance_date) delete payload.ordonnance_date
-      const res = await venteService.creer(payload)
+
+      if (!isOnline) {
+        if (!checkOfflineStock()) { setSaving(false); return }
+        const rec = await queueSale(payload, ordonnanceFile)
+        setModal(false)
+        toast.success(t('sales.toastQueuedOffline'))
+        setReceipt(pendingToVenteLike(rec, meds, vendeurNom))
+        setSaving(false)
+        return
+      }
+
+      let res
+      try {
+        res = await venteService.creer(payload)
+      } catch (e) {
+        if (isNetworkError(e)) {
+          if (!checkOfflineStock()) { setSaving(false); return }
+          const rec = await queueSale(payload, ordonnanceFile)
+          setModal(false)
+          toast.success(t('sales.toastQueuedOffline'))
+          setReceipt(pendingToVenteLike(rec, meds, vendeurNom))
+          setSaving(false)
+          return
+        }
+        throw e
+      }
+
       if (ordonnanceFile) {
         try { await venteService.uploadOrdonnanceScan(res.data.id, ordonnanceFile) }
         catch { toast.error(t('sales.toastScanUploadFailed')) }
@@ -160,6 +255,13 @@ export default function VentesPage() {
   const total = calcTotal()
   const paye = parseInt(form.montant_paye) || 0
   const monnaie = Math.max(0, paye - total)
+  const offlineVentes = pendingSales.map(rec => pendingToVenteLike(rec, meds, vendeurNom))
+  const displayVentes = [...offlineVentes, ...ventes]
+
+  const handleDiscardOffline = (rec) => {
+    if (!window.confirm(t('sales.confirmDiscardOffline'))) return
+    discardQueuedSale(rec.localId)
+  }
 
   return (
     <div className="space-y-4">
@@ -189,13 +291,13 @@ export default function VentesPage() {
           <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
           </div>
-        ) : ventes.length === 0 ? (
+        ) : displayVentes.length === 0 ? (
           <div className="text-center text-gray-400 py-12 text-sm">{t('sales.noResults')}</div>
         ) : (
           <>
             {/* Vue mobile — cartes */}
             <div className="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
-              {ventes.map(v => (
+              {displayVentes.map(v => (
                 <div key={v.id}>
                   <div
                     className="p-4 flex items-start justify-between gap-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/50"
@@ -205,6 +307,7 @@ export default function VentesPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono font-medium text-sm text-gray-900 dark:text-white">{v.reference}</span>
                         <span className={STATUT_BADGE[v.statut] || 'badge-gray'}>{statutLabel(v.statut)}</span>
+                        {v.__offline && <WifiOff size={12} className="text-amber-500" />}
                         {v.numero_ordonnance && (
                           <span className="badge-gray flex items-center gap-1" title={t('sales.prescriptionBadge')}>
                             <FileText size={11} /> {t('sales.prescription')}
@@ -217,6 +320,9 @@ export default function VentesPage() {
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {paymentLabels[v.mode_paiement] || v.mode_paiement}
                       </div>
+                      {v.__offline && v.errorMessage && (
+                        <div className="text-xs text-red-500 mt-0.5">{v.errorMessage}</div>
+                      )}
                     </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-1">
                       <span className="font-semibold text-sm text-gray-900 dark:text-white">{formatFCFA(v.montant_total, lang)}</span>
@@ -228,6 +334,15 @@ export default function VentesPage() {
                         >
                           <Printer size={13} />
                         </button>
+                        {v.__offline && (
+                          <button
+                            onClick={e => { e.stopPropagation(); handleDiscardOffline(v.__record) }}
+                            className="p-1 text-gray-400 hover:text-red-600 rounded transition-colors"
+                            title={t('sales.discardOffline')}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                         {expanded === v.id ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
                       </div>
                     </div>
@@ -263,7 +378,7 @@ export default function VentesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ventes.map(v => (
+                  {displayVentes.map(v => (
                     <>
                       <tr key={v.id} className="tr cursor-pointer" onClick={() => setExpanded(expanded === v.id ? null : v.id)}>
                         <td className="td text-gray-400">
@@ -272,8 +387,10 @@ export default function VentesPage() {
                         <td className="td font-mono font-medium">
                           <div className="flex items-center gap-1.5">
                             {v.reference}
+                            {v.__offline && <WifiOff size={13} className="text-amber-500" title={t('sales.statutOffline')} />}
                             {v.numero_ordonnance && <FileText size={13} className="text-gray-400" title={t('sales.prescriptionBadge')} />}
                           </div>
+                          {v.__offline && v.errorMessage && <div className="text-xs font-normal text-red-500">{v.errorMessage}</div>}
                         </td>
                         <td className="td text-xs">{formatDateTime(v.date_vente, lang)}</td>
                         <td className="td">{v.client_nom || '—'}</td>
@@ -282,13 +399,24 @@ export default function VentesPage() {
                         <td className="td text-xs">{v.vendeur_nom || '—'}</td>
                         <td className="td"><span className={STATUT_BADGE[v.statut] || 'badge-gray'}>{statutLabel(v.statut)}</span></td>
                         <td className="td">
-                          <button
-                            onClick={e => { e.stopPropagation(); setReceipt(v) }}
-                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                            title={t('sales.printReceipt')}
-                          >
-                            <Printer size={14} />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={e => { e.stopPropagation(); setReceipt(v) }}
+                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                              title={t('sales.printReceipt')}
+                            >
+                              <Printer size={14} />
+                            </button>
+                            {v.__offline && (
+                              <button
+                                onClick={e => { e.stopPropagation(); handleDiscardOffline(v.__record) }}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title={t('sales.discardOffline')}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                       {expanded === v.id && (
@@ -420,6 +548,12 @@ export default function VentesPage() {
                 <X size={18} />
               </button>
             </div>
+            {!isOnline && (
+              <div className="px-5 py-2.5 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/40 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
+                <WifiOff size={13} className="shrink-0" />
+                {t('sales.offlineFormHint')}
+              </div>
+            )}
             <div className="p-5 space-y-5">
               {/* Client */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -524,10 +658,11 @@ export default function VentesPage() {
                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('sales.payment')}</label>
                     <select className="input text-sm" value={form.mode_paiement} onChange={e => setForm(p => ({ ...p, mode_paiement: e.target.value }))}>
                       <option value="especes">{t('sales.cash')}</option>
-                      <option value="mobile_money">{t('sales.mobile')}</option>
+                      {isOnline && <option value="mobile_money">{t('sales.mobile')}</option>}
                       <option value="carte">{t('sales.card')}</option>
                       <option value="credit">{t('sales.credit')}</option>
                     </select>
+                    {!isOnline && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t('sales.momoRequiresOnline')}</p>}
                   </div>
                   {form.mode_paiement === 'mobile_money' ? (
                     <div>

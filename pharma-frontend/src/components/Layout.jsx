@@ -2,9 +2,10 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useLang } from '../context/LangContext'
+import { useOffline } from '../context/OfflineContext'
 import {
   LayoutDashboard, Pill, Package, ShoppingCart,
-  Bell, LogOut, User, Users, Menu, X, Sun, Moon, Wallet, Truck
+  Bell, LogOut, User, Users, Menu, X, Sun, Moon, Wallet, Truck, WifiOff, RefreshCw
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -23,6 +24,7 @@ export default function Layout() {
   const { user, logout } = useAuth()
   const { dark, toggle: toggleTheme } = useTheme()
   const { lang, t, toggleLang } = useLang()
+  const { isOnline, pendingSales, syncing, syncNow } = useOffline()
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -103,6 +105,14 @@ export default function Layout() {
       {/* ── Zone principale (droite de la sidebar) ── */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
 
+        {/* ── Bandeau hors ligne ── */}
+        {!isOnline && (
+          <div className="bg-amber-500 text-white text-xs sm:text-sm font-medium px-4 py-2 flex items-center justify-center gap-2 text-center">
+            <WifiOff size={14} className="shrink-0" />
+            {t('layout.offlineBanner')}
+          </div>
+        )}
+
         {/* ── Header ── */}
         <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between px-5 h-14">
@@ -125,6 +135,20 @@ export default function Layout() {
 
             {/* Droite : thème + langue + déconnexion */}
             <div className="flex items-center gap-1">
+              {/* Synchronisation des ventes hors ligne */}
+              {pendingSales.length > 0 && (
+                <button
+                  onClick={syncNow}
+                  disabled={syncing || !isOnline}
+                  title={t('layout.pendingSyncHint')}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-60"
+                >
+                  <RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />
+                  <span className="hidden sm:inline">{t('layout.pendingSync', { n: pendingSales.length })}</span>
+                  <span className="sm:hidden">{pendingSales.length}</span>
+                </button>
+              )}
+
               {/* Thème */}
               <button
                 onClick={toggleTheme}

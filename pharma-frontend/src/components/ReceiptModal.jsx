@@ -47,6 +47,11 @@ export default function ReceiptModal({ vente, onClose }) {
       >
         {/* Header */}
         <div className="text-center px-6 pt-6 pb-4 border-b border-dashed border-gray-300">
+          {vente.__offline && (
+            <div className="mb-2 inline-block text-xs font-semibold uppercase tracking-wide text-amber-700 bg-amber-100 rounded-full px-3 py-1">
+              {t('receipt.offlineProvisional')}
+            </div>
+          )}
           <div className="text-lg font-bold tracking-wide uppercase">{pharmacieNom}</div>
           <div className="text-xs text-gray-500 mt-0.5">{pharmacieAdresse}</div>
           <div className="text-xs text-gray-400 mt-0.5">Tél: {pharmacieTel}</div>
@@ -102,6 +107,12 @@ export default function ReceiptModal({ vente, onClose }) {
             <Row label={t('receipt.changeGiven')} value={formatFCFA(vente.monnaie_rendue, lang)} highlight />
           )}
         </div>
+
+        {vente.__offline && (
+          <div className="px-6 py-3 border-b border-dashed border-gray-300 text-xs text-amber-700 bg-amber-50">
+            {t('receipt.offlineNote')}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-center px-6 py-4 text-xs text-gray-500 space-y-0.5">

@@ -86,6 +86,12 @@ const translations = {
       prescriberOrder: "N° d'ordre ONMC", prescriptionDate: "Date de l'ordonnance",
       prescriptionScan: 'Scan ordonnance (PDF ou image)', prescriptionBadge: 'Ordonnance',
       toastScanUploadFailed: "La vente a été enregistrée mais l'envoi du scan a échoué",
+      statutOffline: 'Hors ligne (en attente)', statutSyncError: 'Erreur de synchronisation',
+      toastQueuedOffline: 'Vente enregistrée hors ligne — synchronisation automatique au retour du réseau',
+      momoRequiresOnline: 'Le Mobile Money nécessite une connexion internet',
+      offlineFormHint: 'Vous êtes hors ligne : cette vente sera enregistrée localement et synchronisée automatiquement au retour de la connexion.',
+      discardOffline: 'Supprimer cette vente en attente',
+      confirmDiscardOffline: 'Supprimer définitivement cette vente hors ligne, non encore synchronisée ?',
     },
     alerts: {
       title: 'Alertes', subtitle: 'Alertes de stock et de péremption',
@@ -129,6 +135,9 @@ const translations = {
     layout: {
       subtitle: 'Gestion pharmacie', lightMode: 'Mode clair', darkMode: 'Mode sombre',
       footerTagline: 'Système de gestion de pharmacie', timezone: 'Fuseau : Africa/Douala',
+      offlineBanner: 'Vous êtes hors ligne — les nouvelles ventes sont enregistrées localement et seront synchronisées automatiquement.',
+      pendingSync: (p) => `${p.n} vente(s) en attente`,
+      pendingSyncHint: 'Cliquer pour synchroniser maintenant',
     },
     receipt: {
       subtitle: 'Reçu de Vente', reference: 'Référence', date: 'Date', cashier: 'Caissier',
@@ -139,6 +148,8 @@ const translations = {
       niu: 'NIU', rccm: 'RCCM', montantHT: 'Montant HT',
       tva: (p) => `TVA (${p.taux}%)`,
       prescriptionTitle: 'Ordonnance', prescriptionNumber: 'N° ordonnance', prescriber: 'Prescripteur',
+      offlineProvisional: 'Reçu provisoire — vente hors ligne',
+      offlineNote: 'Référence et détail fiscal provisoires : ils seront finalisés lors de la synchronisation avec le serveur.',
     },
     paie: {
       title: 'Paie', subtitle: 'Gestion de la paie des employés',
@@ -294,6 +305,12 @@ const translations = {
       prescriberOrder: 'ONMC order number', prescriptionDate: 'Prescription date',
       prescriptionScan: 'Prescription scan (PDF or image)', prescriptionBadge: 'Prescription',
       toastScanUploadFailed: 'The sale was saved but the scan upload failed',
+      statutOffline: 'Offline (pending)', statutSyncError: 'Sync error',
+      toastQueuedOffline: 'Sale saved offline — will sync automatically once back online',
+      momoRequiresOnline: 'Mobile Money requires an internet connection',
+      offlineFormHint: 'You are offline: this sale will be saved locally and synced automatically once the connection returns.',
+      discardOffline: 'Discard this pending sale',
+      confirmDiscardOffline: 'Permanently discard this offline sale, not yet synced?',
     },
     alerts: {
       title: 'Alerts', subtitle: 'Stock and expiry alerts',
@@ -337,6 +354,9 @@ const translations = {
     layout: {
       subtitle: 'Pharmacy management', lightMode: 'Light mode', darkMode: 'Dark mode',
       footerTagline: 'Pharmacy management system', timezone: 'Timezone: Africa/Douala',
+      offlineBanner: 'You are offline — new sales are saved locally and will sync automatically.',
+      pendingSync: (p) => `${p.n} sale(s) pending`,
+      pendingSyncHint: 'Click to sync now',
     },
     receipt: {
       subtitle: 'Sales Receipt', reference: 'Reference', date: 'Date', cashier: 'Cashier',
@@ -347,6 +367,8 @@ const translations = {
       niu: 'Tax ID (NIU)', rccm: 'Trade Register (RCCM)', montantHT: 'Amount excl. tax',
       tva: (p) => `VAT (${p.taux}%)`,
       prescriptionTitle: 'Prescription', prescriptionNumber: 'Prescription number', prescriber: 'Prescriber',
+      offlineProvisional: 'Provisional receipt — offline sale',
+      offlineNote: 'Provisional reference and tax breakdown: finalized once synced with the server.',
     },
     paie: {
       title: 'Payroll', subtitle: 'Employee payroll management',

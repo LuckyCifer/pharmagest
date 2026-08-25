@@ -8,3 +8,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Le mode hors ligne applicatif (file d'attente des ventes) reste
+      // disponible même si le service worker échoue à s'enregistrer —
+      // seul le chargement de l'interface sans réseau ne serait plus garanti.
+    })
+  })
+}
