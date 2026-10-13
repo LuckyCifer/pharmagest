@@ -19,3 +19,6 @@ media/
 
 # Config locale Claude Code
 .claude/
+
+# Dump de la base (donnees reelles : ne jamais publier)
+pharmagest_db.sql

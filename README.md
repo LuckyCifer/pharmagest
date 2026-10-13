@@ -26,7 +26,7 @@ docker compose up -d --build
 - Admin Django : http://localhost:8080/admin/
 - MySQL (depuis l'hôte) : `localhost:3307`, utilisateur `root`, mot de passe `pharmagest`
 
-Au premier démarrage, MySQL importe `pharmagest_db.sql` s'il est présent à la racine.
+Au premier démarrage, MySQL importe `pharma-frontend/docker/pharmagest_db.sql` s'il est présent (fichier non versionné).
 Pour réimporter le dump : `docker compose down -v` puis `docker compose up -d`.
 Les variables (`SECRET_KEY`, `DB_PASSWORD`, `VITE_PHARMACIE_*`…) peuvent être définies dans un fichier `.env` à la racine.
 
