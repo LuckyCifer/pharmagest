@@ -10,7 +10,7 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - db_data:/var/lib/mysql
-      - ./pharma-frontend/docker/pharmagest_db.sql:/docker-entrypoint-initdb.d/pharmagest_db.sql:ro
+      - ./pharma-frontend/docker/mysql-init:/docker-entrypoint-initdb.d:ro
     ports:
       - "3307:3306"
     healthcheck:

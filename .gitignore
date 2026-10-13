@@ -21,4 +21,4 @@ media/
 .claude/
 
 # Dump de la base (donnees reelles : ne jamais publier)
-pharmagest_db.sql
+pharma-frontend/docker/mysql-init/*.sql
