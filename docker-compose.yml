@@ -1,0 +1,64 @@
+name: pharmagest
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-pharmagest_db}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-pharmagest}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./pharmagest_db.sql:/docker-entrypoint-initdb.d/pharmagest_db.sql:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--protocol=tcp", "-p${DB_PASSWORD:-pharmagest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./pharma-backend
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-docker-change-me}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      DB_NAME: ${DB_NAME:-pharmagest_db}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-pharmagest}
+      DB_HOST: db
+      DB_PORT: 3306
+      NOTCHPAY_API_KEY: ${NOTCHPAY_API_KEY:-}
+      TAUX_TVA: ${TAUX_TVA:-19.25}
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./pharma-frontend
+      args:
+        VITE_PHARMACIE_NOM: ${VITE_PHARMACIE_NOM:-PharmaGest}
+        VITE_PHARMACIE_ADRESSE: ${VITE_PHARMACIE_ADRESSE:-}
+        VITE_PHARMACIE_TEL: ${VITE_PHARMACIE_TEL:-}
+        VITE_PHARMACIE_NIU: ${VITE_PHARMACIE_NIU:-}
+        VITE_PHARMACIE_RCCM: ${VITE_PHARMACIE_RCCM:-}
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - static_data:/srv/static:ro
+      - media_data:/srv/media:ro
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
+  static_data:
+  media_data:

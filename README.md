@@ -14,6 +14,24 @@ Stack : **React 18 + Vite** / **Django 5 + DRF** / **MySQL 8**
 
 ---
 
+## Démarrage rapide avec Docker
+
+Prérequis : Docker Desktop.
+
+```bash
+docker compose up -d --build
+```
+
+- Application : http://localhost:8080
+- Admin Django : http://localhost:8080/admin/
+- MySQL (depuis l'hôte) : `localhost:3307`, utilisateur `root`, mot de passe `pharmagest`
+
+Au premier démarrage, MySQL importe `pharmagest_db.sql` s'il est présent à la racine.
+Pour réimporter le dump : `docker compose down -v` puis `docker compose up -d`.
+Les variables (`SECRET_KEY`, `DB_PASSWORD`, `VITE_PHARMACIE_*`…) peuvent être définies dans un fichier `.env` à la racine.
+
+---
+
 ## 1. Cloner le projet
 
 ```bash
