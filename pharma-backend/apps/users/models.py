@@ -22,6 +22,12 @@ class Utilisateur(AbstractUser):
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
 
+    def save(self, *args, **kwargs):
+        # est_actif est le flag métier ; is_active est celui que Django et simplejwt
+        # vérifient à la connexion et à chaque requête — on les garde synchronisés.
+        self.is_active = self.est_actif
+        super().save(*args, **kwargs)
+
     @property
     def est_admin(self):
         return self.role == 'admin'

@@ -6,8 +6,15 @@ from .models import FichePaie
 from .serializers import FichePaieSerializer
 
 
+def _fiches_visibles(user):
+    """Un caissier n'accède qu'à ses propres fiches ; admin et pharmacien à toutes."""
+    qs = FichePaie.objects.select_related('employe', 'cree_par')
+    if user.role == 'caissier':
+        qs = qs.filter(employe=user)
+    return qs
+
+
 class FichePaieListCreateView(generics.ListCreateAPIView):
-    queryset = FichePaie.objects.select_related('employe', 'cree_par').all()
     serializer_class = FichePaieSerializer
 
     def get_permissions(self):
@@ -17,7 +24,7 @@ class FichePaieListCreateView(generics.ListCreateAPIView):
         return [IsAdminOrPharmacienOrCaissier()]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = _fiches_visibles(self.request.user)
         mois = self.request.query_params.get('mois')
         annee = self.request.query_params.get('annee')
         employe = self.request.query_params.get('employe')
@@ -34,8 +41,10 @@ class FichePaieListCreateView(generics.ListCreateAPIView):
 
 
 class FichePaieDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = FichePaie.objects.select_related('employe', 'cree_par').all()
     serializer_class = FichePaieSerializer
+
+    def get_queryset(self):
+        return _fiches_visibles(self.request.user)
 
     def get_permissions(self):
         if self.request.method == 'DELETE':
@@ -50,7 +59,7 @@ class FichePaieDetailView(generics.RetrieveUpdateDestroyAPIView):
 def marquer_payee(request, pk):
     from django.utils import timezone
     try:
-        fiche = FichePaie.objects.get(pk=pk)
+        fiche = _fiches_visibles(request.user).get(pk=pk)
         fiche.statut = 'payee'
         fiche.date_paiement = timezone.now()
         fiche.save()

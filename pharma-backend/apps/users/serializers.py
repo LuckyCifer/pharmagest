@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Utilisateur
 
 
@@ -49,3 +53,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data['user'] = UtilisateurSerializer(self.user).data
         return data
+
+
+class ActiveUserTokenRefreshSerializer(TokenRefreshSerializer):
+    """Refuse de renouveler le jeton d'un compte désactivé (simplejwt 5.3 ne le vérifie pas)."""
+    def validate(self, attrs):
+        try:
+            user_id = RefreshToken(attrs['refresh']).payload.get(api_settings.USER_ID_CLAIM)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+        if not Utilisateur.objects.filter(pk=user_id, is_active=True).exists():
+            raise AuthenticationFailed("Ce compte est désactivé.", code='user_inactive')
+        return super().validate(attrs)

@@ -1,4 +1,3 @@
-from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 from apps.medicaments.models import Medicament, Fournisseur
@@ -32,15 +31,11 @@ class CommandeFournisseur(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.reference:
-            now = timezone.localtime(timezone.now())
-            debut_jour = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            fin_jour = debut_jour + timedelta(days=1)
-            # Bornes explicites (pas de lookup __date) : évite de dépendre de CONVERT_TZ()
-            # côté MySQL, dont les tables de fuseaux horaires ne sont pas toujours chargées.
-            count = CommandeFournisseur.objects.filter(
-                date_creation__gte=debut_jour, date_creation__lt=fin_jour
-            ).count() + 1
-            self.reference = f"BC{now.strftime('%Y%m%d')}{count:04d}"
+            prefixe = f"BC{timezone.localtime(timezone.now()).strftime('%Y%m%d')}"
+            # Numéro suivant la plus grande référence du jour : reste unique après suppression.
+            derniere = CommandeFournisseur.objects.filter(reference__startswith=prefixe).order_by('-reference').values_list('reference', flat=True).first()
+            numero = int(derniere[len(prefixe):]) + 1 if derniere else 1
+            self.reference = f"{prefixe}{numero:04d}"
         super().save(*args, **kwargs)
 
 

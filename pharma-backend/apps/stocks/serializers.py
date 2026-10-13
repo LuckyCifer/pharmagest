@@ -18,6 +18,13 @@ class MouvementStockSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['quantite_avant', 'quantite_apres', 'date_mouvement']
 
+    def validate(self, data):
+        quantite = data.get('quantite')
+        minimum = 0 if data.get('type_mouvement') == 'ajustement' else 1
+        if quantite is not None and quantite < minimum:
+            raise serializers.ValidationError({'quantite': f"La quantité doit être supérieure ou égale à {minimum}."})
+        return data
+
 
 class AlerteSerializer(serializers.ModelSerializer):
     medicament_nom = serializers.CharField(source='medicament.nom', read_only=True)

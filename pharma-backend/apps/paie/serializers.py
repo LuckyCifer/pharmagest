@@ -11,6 +11,9 @@ class FichePaieSerializer(serializers.ModelSerializer):
         model = FichePaie
         fields = '__all__'
         read_only_fields = ['montant_net', 'date_creation', 'cree_par']
+        extra_kwargs = {
+            'mois': {'min_value': 1, 'max_value': 12},
+        }
 
     def get_employe_nom(self, obj):
         return obj.employe.get_full_name() or obj.employe.username

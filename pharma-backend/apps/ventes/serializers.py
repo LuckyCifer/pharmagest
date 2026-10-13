@@ -7,7 +7,9 @@ from apps.medicaments.models import Medicament
 
 
 class LigneVenteSerializer(serializers.ModelSerializer):
+    medicament = serializers.PrimaryKeyRelatedField(queryset=Medicament.objects.filter(est_actif=True))
     medicament_nom = serializers.CharField(source='medicament.nom', read_only=True)
+    quantite = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = LigneVente
@@ -36,6 +38,11 @@ class VenteSerializer(serializers.ModelSerializer):
             'numero_ordonnance', 'prescripteur_nom', 'prescripteur_ordre', 'ordonnance_date', 'ordonnance_scan',
         ]
         read_only_fields = ['reference', 'date_vente', 'montant_total', 'montant_ht', 'montant_tva', 'reference_paiement', 'ordonnance_scan']
+
+    def validate_lignes(self, lignes):
+        if not lignes:
+            raise serializers.ValidationError("La vente doit contenir au moins un article.")
+        return lignes
 
     def validate(self, data):
         if data.get('mode_paiement') == 'mobile_money':

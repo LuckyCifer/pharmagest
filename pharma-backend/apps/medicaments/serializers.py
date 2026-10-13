@@ -40,3 +40,9 @@ class MedicamentSerializer(serializers.ModelSerializer):
             'date_creation', 'date_modification'
         ]
         read_only_fields = ['date_creation', 'date_modification']
+        extra_kwargs = {
+            'prix_achat': {'min_value': 0},
+            'prix_vente': {'min_value': 0},
+            'quantite_stock': {'min_value': 0},
+            'seuil_alerte': {'min_value': 0},
+        }

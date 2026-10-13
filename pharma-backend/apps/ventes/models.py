@@ -58,17 +58,13 @@ class Vente(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.reference:
-            from datetime import timedelta
             from django.utils import timezone
-            now = timezone.localtime(timezone.now())
-            debut_jour = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            fin_jour = debut_jour + timedelta(days=1)
-            # Bornes explicites (pas de lookup __date) : évite de dépendre de CONVERT_TZ()
-            # côté MySQL, dont les tables de fuseaux horaires ne sont pas toujours chargées.
-            count = Vente.objects.filter(
-                date_vente__gte=debut_jour, date_vente__lt=fin_jour
-            ).count() + 1
-            self.reference = f"VT{now.strftime('%Y%m%d')}{count:04d}"
+            prefixe = f"VT{timezone.localtime(timezone.now()).strftime('%Y%m%d')}"
+            # Numéro suivant la plus grande référence du jour (et non le nombre de ventes) :
+            # reste unique même si une vente du jour a été supprimée.
+            derniere = Vente.objects.filter(reference__startswith=prefixe).order_by('-reference').values_list('reference', flat=True).first()
+            numero = int(derniere[len(prefixe):]) + 1 if derniere else 1
+            self.reference = f"{prefixe}{numero:04d}"
         super().save(*args, **kwargs)
 
 
