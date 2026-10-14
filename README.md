@@ -22,9 +22,9 @@ Prérequis : Docker Desktop.
 docker compose up -d --build
 ```
 
-- Application : http://localhost:8080
-- Admin Django : http://localhost:8080/admin/
-- MySQL (depuis l'hôte) : `localhost:3307`, utilisateur `root`, mot de passe `pharmagest`
+- Application : http://localhost:8081
+- Admin Django : http://localhost:8081/admin/
+- MySQL (depuis l'hôte) : `localhost:3308`, utilisateur `root`, mot de passe `pharmagest`
 
 Au premier démarrage, MySQL importe les fichiers `.sql` placés dans `pharma-frontend/docker/mysql-init/` (non versionnés).
 Pour réimporter le dump : `docker compose down -v` puis `docker compose up -d`.
